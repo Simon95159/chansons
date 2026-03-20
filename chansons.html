@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>">
+
+    <title>Chansons Bébé</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind configuration for Dark Mode
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        .song-card { aspect-ratio: 1 / 1; }
+        .card-text { font-size: 0.8rem; line-height: 0.85rem; text-transform: uppercase; font-weight: 900; }
+        * { -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        /* Smooth transition for dark mode */
+        body { transition: background-color 0.3s, color 0.3s; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100">
+
+    <div class="sticky top-0 z-40 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-md p-4 flex gap-2">
+        <input type="text" id="searchInput" placeholder="..." 
+               class="flex-1 p-3 rounded-2xl border-2 border-indigo-100 dark:border-slate-700 bg-white dark:bg-slate-800 outline-none shadow-sm">
+        
+        <button onclick="toggleDarkMode()" class="p-3 bg-white dark:bg-slate-800 rounded-2xl border-2 border-indigo-100 dark:border-slate-700 shadow-sm">
+            <span id="dark-icon">🌙</span>
+        </button>
+    </div>
+
+    <main id="song-grid" class="grid grid-cols-4 gap-2 p-2 pb-20">
+        </main>
+
+    <div id="lyrics-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-t-[2.5rem] p-6 max-h-[90vh] overflow-y-auto no-scrollbar shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modal-title" class="text-xl font-bold text-indigo-900 dark:text-indigo-300 leading-tight pr-4"></h2>
+                <button onclick="closeLyrics()" class="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 p-2 rounded-full px-4 text-xs font-bold uppercase">X</button>
+            </div>
+            
+            <div class="flex gap-2 mb-6">
+                <a id="link-yt" href="#" target="_blank" rel="noreferrer" class="flex-1 bg-red-600 text-white py-3 rounded-xl text-center text-xs font-bold">YOUTUBE</a>
+                <a id="link-spoti" href="#" target="_blank" class="flex-1 bg-green-600 text-white py-3 rounded-xl text-center text-xs font-bold">SPOTIFY</a>
+                <a id="link-google" href="#" target="_blank" class="flex-1 bg-blue-600 text-white py-3 rounded-xl text-center text-xs font-bold hidden">PAROLES</a>
+            </div>
+
+            <div id="modal-lyrics" class="whitespace-pre-wrap text-[1.1rem] leading-relaxed text-slate-700 dark:text-slate-300 pb-12"></div>
+        </div>
+    </div>
+
+    <script>
+        const songs = [
+            // --- YOUR INITIAL SAMPLES ---
+            {
+                word: "Maman",
+				color: "rose", 
+                title: "Ah! vous dirai-je, maman",
+                yt: "https://m.youtube.com/results?search_query=ah+vous+dirai-je+maman",
+                spoti: "https://open.spotify.com/search/ah%20vous%20dirai-je%20maman",
+                lyrics: "Ah ! vous dirai-je, maman,\nCe qui cause mon tourment.\nPapa veut que je raisonne,\nComme une grande personne.\nMoi, je dis que les bonbons\nValent mieux que la raison."
+            },
+
+            {
+                word: "Ainsi",
+				color: "purple", 
+                title: "Ainsi font, font, font",
+                yt: "https://m.youtube.com/results?search_query=ainsi+font+font+font",
+                spoti: "https://open.spotify.com/search/ainsi+font",
+                lyrics: "Ainsi font, font, font\nLes petites marionnettes,\nAinsi font, font, font\nTrois petits tours et puis s'en vont.\n\nLes mains aux côtés,\nSautez, sautez marionnettes,\nLes mains aux côtés\nMarionnettes recommencez.\n\nAinsi font ...\n\nElles reviendront\nLes petites marionnettes,\nElles reviendront\nQuand les enfants dormiront."
+            },
+
+            {
+                word: "Alouette",
+				color: "blue", 
+                title: "Alouette",
+                yt: "https://m.youtube.com/results?search_query=alouette+gentille+alouette",
+                spoti: "https://open.spotify.com/search/alouette",
+                lyrics: "Alouette, gentille alouette,\nAlouette, je te plumerai.\nJe te plumerai la tête,\nJe te plumerai la tête,\nEt la tête, et la tête,\nAlouette, Alouette,\nOh, oh, oh, oh.\n\nAlouette, gentille alouette,\nAlouette, je te plumerai.\nJe te plumerai le bec,\nJe te plumerai le bec,\nEt le bec, et le bec,\nEt la tête, et la tête,\nAlouette, Alouette,\nOh, oh, oh, oh.\n\nAlouette, gentille alouette,\nAlouette, je te plumerai.\nJe te plumerai le cou,\nJe te plumerai le cou,\nEt le cou, et le cou,\nEt le bec, et le bec,\nEt la tête, et la tête,\nAlouette, Alouette,\nOh, oh, oh, oh.\n\nAlouette, gentille alouette,\nAlouette, je te plumerai.\nJe te plumerai les ailes,\nJe te plumerai les ailes,\nEt les ailes, et les ailes,\nEt le cou, et le cou,\nEt le bec, et le bec,\nEt la tête, et la tête,\nAlouette, Alouette,\nOh, oh, oh, oh.\n\nAlouette, gentille alouette,\nAlouette, je te plumerai.\nJe te plumerai le dos,\nJe te plumerai le dos,\nEt le dos, et le dos,\nEt les ailes, et les ailes,\nEt le cou, et le cou,\nEt le bec, et le bec,\nEt la tête, et la tête,\nAlouette, Alouette,\nOh, oh, oh, oh.\n\nAlouette, gentille alouette,\nAlouette, je te plumerai.\nJe te plumerai les pattes,\nJe te plumerai les pattes,\nEt les pattes, et les pattes,\nEt le dos, et le dos,\nEt les ailes, et les ailes,\nEt le cou, et le cou,\nEt le bec, et le bec,\nEt la tête, et la tête,\nAlouette, Alouette,\nOh, oh, oh, oh.\n\nAlouette, gentille alouette,\nAlouette, je te plumerai.\nJe te plumerai la queue,\nJe te plumerai la queue,\nEt la queue, et la queue,\nEt les pattes, et les pattes,\nEt le dos, et le dos,\nEt les ailes, et les ailes,\nEt le cou, et le cou,\nEt le bec, et le bec,\nEt la tête, et la tête,\nAlouette, Alouette,\nOh, oh, oh, oh, oh."
+            },
+            {
+                word: "Blonde",
+				color: "amber", 
+                title: "Auprès de ma blonde",
+                yt: "https://m.youtube.com/results?search_query=auprès+de+ma+blonde",
+                spoti: "https://open.spotify.com/search/auprès+de+ma+blonde",
+                lyrics: "Au jardin de mon père les lilas sont fleuris,\nTous les oiseaux du monde vienn't y faire leurs nids.\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir.\n\nTous les oiseaux du monde vienn't y faire leurs nids,\nMa caill', ma tourterelle et ma joli' perdrix.\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir.\n\nMa caill', ma tourterelle et ma joli' perdrix,\nEt ma joli' colombe qui chante jour et nuit.\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir.\n\nEt ma joli' colombe qui chante jour et nuit,\nQui chante pour les filles qui n'ont point de mari.\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir.\n\nQui chante pour les filles qui n'ont point de mari,\nPour moi, ne chante guère, car j'en ai un joli.\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir.\n\nPour moi, ne chante guère, car j'en ai un joli,\nMais je suis pas contente car il n'est pas ici.\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir.\n\nMais je suis pas contente car il n'est pas ici,\nIl est en Hollande, les Hollandais l'ont pris.\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir.\n\nIl est en Hollande, les Hollandais l'ont pris.\n— Que donn'riez-vous, la belle, pour avoir un mari ?\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir.\n\nQue donn'riez-vous, la belle, pour avoir un mari ?\n— Je donnerais Versailles, Paris et Saint-Denis !\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir.\n\nJe donnerais Versailles, Paris et Saint-Denis !\nLes tours de Notre-Dame, le clocher d'mon pays !\nAuprès d'ma blonde,\nQu'il fait fait bon, fait bon, fait bon.\nAuprès d'ma blonde,\nQu'il fait bon dormir."
+            },
+
+            {
+                word: "Lune",
+				color: "blue", 
+                title: "Au clair de la lune",
+                yt: "https://m.youtube.com/results?search_query=au+clair+de+la+lune",
+                spoti: "https://open.spotify.com/search/au+clair+de+la+lune",
+                lyrics: "Au clair de la Lune,\nMon ami Pierrot,\nPrête-moi ta plume,\nPour écrire un mot.\nMa chandelle est morte,\nJe n'ai plus de feu.\nOuvre-moi ta porte,\nPour l'amour de Dieu.\n\nAu clair de la Lune,\nPierrot répondit :\n\"Je n'ai pas de plume,\nJe suis dans mon lit.\nVa chez la voisine,\nJe crois qu'elle y est,\nCar dans sa cuisine,\nOn bat le briquet.\"\n\nAu clair de la Lune,\nOn n'y voit qu'un peu.\nOn cherche la plume,\nOn cherche le feu.\nEn cherchant d'la sorte,\nJe n'sais c'qu'on trouvera,\nMais je sais qu'la porte\nSur eux se ferma."
+            },
+
+            {
+                word: "Palais",
+				color: "purple",
+                title: "Aux marches du palais",
+                yt: "https://m.youtube.com/results?search_query=aux+marches+du+palais",
+                spoti: "https://open.spotify.com/search/aux%20marches%20du%20palais",
+                lyrics: "Aux marches du palais,\nY a une tant belle fille, lon la,\nY a une tant belle fille.\n\nElle a tant d'amoureux,\nElle a tant d'amoureux,\nQu'elle ne sait lequel prendre, lon la,\nQu'elle ne sait lequel prendre.\n\nC'est un petit cordonnier,\nC'est un petit cordonnier,\nQu'a eu la préférence, lon la,\nQu'a eu la préférence.\n\nEt c'est en la chaussant,\nEt c'est en la chaussant,\nQu'il en fit la demande, lon la,\nQu'il en fit la demande.\n\nLa belle si tu voulais,\nLa belle si tu voulais,\nNous dormirions ensemble, lon la,\nNous dormirions ensemble.\n\nDans un grand lit carré,\nDans un grand lit carré,\nCouvert de toile blanche, lon la,\nCouvert de toile blanche.\n\nAux quatre coins du lit,\nAux quatre coins du lit,\nQuatre bouquets de pervenches, lon la,\nQuatre bouquets de pervenches.\n\nDans le mitan du lit,\nDans le mitan du lit,\nLa rivière est profonde, lon la,\nLa rivière est profonde.\n\nTous les chevaux du roi,\nTous les chevaux du roi,\nPourraient y boire ensemble, lon la,\nPourraient y boire ensemble.\n\nEt nous y dormirions,\nEt nous y dormirions,\nJusqu'à la fin du monde, lon la,\nJusqu'à la fin du monde."
+            },
+
+            {
+                word: "Bohème",
+				color: "purple", 
+                title: "La Bohème",
+                yt: "https://m.youtube.com/results?search_query=la+boheme+aznavour",
+                spoti: "https://open.spotify.com/search/la%20boheme",
+                lyrics: "Je vous parle d'un temps que les moins de vingt ans ne peuvent pas connaître,\nMontmartre en ce temps-là, accrochait ses lilas jusque sous nos fenêtres.\nEt si l'humble garni, qui nous servait de nid, ne payait pas de mine,\nC'est là qu'on s'est connu, moi qui criais famine et toi qui posais nue.\n\nLa bohème, la bohème,\nÇa voulait dire on est heureux.\nLa bohème, la bohème,\nNous ne mangions qu'un jour sur deux.\n\nDans les cafés voisins, nous étions quelques-uns qui attendions la gloire,\nEt bien que miséreux, avec le ventre creux, nous ne cessions d'y croire.\nEt quand quelque bistrot, contre un bon repas chaud, nous prenait une toile,\nNous récitions des vers, groupés autour du poêle, en oubliant l'hiver.\n\nLa bohème, la bohème,\nÇa voulait dire tu es jolie.\nLa bohème, la bohème,\nEt nous avions tous du génie.\n\nSouvent il m'arrivait, devant mon chevalet, de passer des nuits blanches,\nRetouchant le dessin de la ligne d'un sein, du galbe d'une hanche.\nEt ce n'est qu'au matin, qu'on s'asseyait enfin devant un café-crème,\nÉpuisés mais ravis, fallait-il que l'on s'aime et qu'on aime la vie.\n\nLa bohème, la bohème,\nÇa voulait dire on a vingt ans.\nLa bohème, la bohème,\nEt nous vivions de l'air du temps.\n\nQuand, au hasard des jours, je m'en vais faire un tour à mon ancienne adresse,\nJe ne reconnais plus ni les murs, ni les rues qui ont vu ma jeunesse.\nEn haut d'un escalier, je cherche l'atelier dont plus rien ne subsiste,\nDans son nouveau décor, Montmartre semble triste et les lilas sont morts.\n\nLa bohème, la bohème,\nOn était jeunes, on était fous.\nLa bohème, la bohème,\nÇa ne veut plus rien dire du tout."
+            },
+            {
+                word: "Dagobert",
+				color: "amber", 
+                title: "Le bon roi Dagobert",
+                yt: "https://m.youtube.com/results?search_query=le+bon+roi+dagobert",
+                spoti: "https://open.spotify.com/search/le%20bon%20roi%20dagobert",
+                lyrics: "Le bon roi Dagobert\nAvait sa culotte à l'envers.\nLe grand saint Éloi\nLui dit : « Ô mon roi !\nVotre Majesté\nEst mal culottée.\n— C'est vrai, lui dit le roi,\nJe vais la remettre à l'endroit. »\n\nLe bon roi Dagobert\nChassait dans la plaine d'Anvers.\nLe grand saint Éloi\nLui dit : « Ô mon roi !\nVotre Majesté\nEst bien essoufflée.\n— C'est vrai, lui dit le roi,\nUn lapin courait après moi. »\n\nLe bon roi Dagobert\nVoulait s'embarquer sur la mer.\nLe grand saint Éloi\nLui dit : « Ô mon roi !\nVotre Majesté\nSe fera noyer.\n— C'est vrai, lui dit le roi,\nOn pourra crier : le roi boit ! »\n\nLe bon roi Dagobert\nMangeait en glouton du dessert.\nLe grand saint Éloi\nLui dit : « Ô mon roi !\nVous êtes gourmand,\nNe mangez pas tant.\n— C'est vrai, lui dit le roi,\nJe ne le suis pas tant que toi. »\n\nLe bon roi Dagobert\nAvait un grand sabre de fer.\nLe grand saint Éloi\nLui dit : « Ô mon roi !\nVotre Majesté\nPourrait se blesser.\n— C'est vrai, lui dit le roi,\nQu'on me donne un sabre de bois. »\n\nLe bon roi Dagobert\nSe battait à tort, à travers.\nLe grand saint Éloi\nLui dit : « Ô mon roi !\nVotre Majesté\nSe fera tuer.\n— C'est vrai, lui dit le roi,\nAlors, mets-toi bien vite devant moi. »\n\nLe bon roi Dagobert\nCraignait fort d'aller en enfer.\nLe grand saint Éloi\nLui dit : « Ô mon roi !\nJe crois bien,\nMa foi qu'vous irez tout droit.\n— C'est vrai, lui dit le roi,\nNe peux-tu pas prier pour moi ? »\n\nQuand Dagobert mourut,\nLe diable aussitôt accourut.\nLe grand saint Éloi\nLui dit : « Ô mon roi !\nSatan va passer,\nFaut vous confesser.\n— Hélas ! lui dit le roi,\nNe pourrais-tu mourir pour moi ? »"
+            },
+            {
+                word: "Do",
+				color: "blue", 
+                title: "Dodo, l'enfant do",
+                yt: "https://m.youtube.com/results?search_query=dodo+l'enfant+do",
+                spoti: "https://open.spotify.com/search/dodo%20l'enfant%20do",
+                lyrics: "Dodo, l'enfant do,\nL'enfant dormira bien vite.\nDodo, l'enfant do,\nL'enfant dormira bientôt."
+            },
+			{
+				"word": "Cadet",
+				"color": "amber", 
+				"title": "Cadet Rousselle",
+				"yt": "https://m.youtube.com/results?search_query=Cadet+Rousselle",
+				"spoti": "https://open.spotify.com/search/Cadet%20Rousselle",
+				"lyrics": "Cadet Rousselle a trois maisons,\nQui n'ont ni poutres ni chevrons,\nC'est pour loger les hirondelles,\nQue direz-vous d'Cadet Rousselle ?\nAh ! Ah ! Ah ! mais vraiment\nCadet Rousselle est bon enfant.\n\nCadet Rousselle a trois habits,\nDeux jaunes, l'autre en papier gris,\nIl met celui-là quand il gèle,\nOu quand il pleut ou quand il grêle.\nAh ! Ah ! Ah ! mais vraiment\nCadet Rousselle est bon enfant.\n\nCadet Rousselle a trois beaux yeux,\nL'un regarde à Caen, l'autre à Bayeux,\nComme il n'a pas la vue bien nette,\nLe troisième c'est sa lorgnette.\nAh ! Ah ! Ah ! mais vraiment\nCadet Rousselle est bon enfant.\n\nCadet Rousselle a trois chiens,\nL'un court au lièvre, l'autre au lapin,\nLe troisième, qui n'est pas sage,\nCourt après les filles du village.\nAh ! Ah ! Ah ! mais vraiment\nCadet Rousselle est bon enfant."
+			},
+			{
+				"word": "Chat",
+				"color": "amber", 
+				"title": "C'est la mère Michel",
+				"yt": "https://m.youtube.com/results?search_query=C'est+la+mère+Michel",
+				"spoti": "https://open.spotify.com/search/C'est%20la%20mère%20Michel",
+				"lyrics": "C'est la mère Michel qui a perdu son chat,\nQui crie par la fenêtre à qui le lui rendra.\nC'est le père Lustucru qui lui a répondu :\n\"Allez, la mère Michel, vot' chat n'est pas perdu !\"\n\nSur l'air du tra la la la la,\nSur l'air du tra la la la la,\nSur l'air du tra déridéra tra la la.\n\nC'est la mère Michel qui lui a demandé :\n\"Mon chat n'est pas perdu, vous l'avez donc trouvé ?\"\nC'est le père Lustucru qui lui a répondu :\n\"Donnez une récompense, il vous sera rendu.\"\n\nSur l'air du tra la la la la,\nSur l'air du tra la la la la,\nSur l'air du tra déridéra tra la la.\n\nEt la mère Michel lui dit :\n\"C'est décidé, si vous m'rendez mon chat, vous aurez un baiser !\"\nEt le père Lustucru, qui n'en a pas voulu,\nLui dit : \"Pour un lapin, vot' chat sera vendu !\""
+			},
+			{
+				"word": "Elephant",
+				"color": "purple", 
+				"title": "Un éléphant se balançait",
+				"yt": "https://m.youtube.com/results?search_query=Un+éléphant+se+balançait",
+				"spoti": "https://open.spotify.com/search/Un%20éléphant%20se%20balançait",
+				"lyrics": "Un éléphant se balançait,\nSur une toile, toile, toile, toile d'araignée,\nIl trouvait ce petit jeu tellement amusant,\nQue bientôt ... \n\nDeux éléphants se balançaient ..."
+			},
+			{
+				"word": "Promenons",
+				"color": "red", 
+				"title": "Promenons-nous dans les bois",
+				"yt": "https://m.youtube.com/results?search_query=Promenons-nous+dans+les+bois",
+				"spoti": "https://open.spotify.com/search/Promenons-nous%20dans%20les%20bois",
+				"lyrics": "Promenons-nous dans les bois,\nPendant que le loup n'y est pas.\nSi le loup y était,\nIl nous mangerait.\nMais comme il n'y est pas,\nIl ne nous mangera pas.\n\nLoup, y es-tu ?\nQue fais-tu ?\nEntends-tu ?\n\n- Je mets ma chemise.\n- Je mets mes chaussettes.\n- Je mets mes souliers.\n- Je mets mon chapeau.\n- Je mets ma culotte.\n\nPromenons-nous dans les bois,\nPendant que le loup n'y est pas.\nSi le loup y était,\nIl nous mangerait.\nMais comme il n'y est pas,\nIl ne nous mangera pas."
+			},
+			{
+				"word": "Souris",
+				"color": "purple", 
+				"title": "Une souris verte",
+				"yt": "https://m.youtube.com/results?search_query=Une+souris+verte",
+				"spoti": "https://open.spotify.com/search/Une%20souris%20verte",
+				"lyrics": "Une souris verte,\nQui courait dans l'herbe,\nJe l'attrape par la queue,\nJe la montre à ces messieurs.\nCes messieurs me disent :\n\"Trempez-la dans l'huile,\nTrempez-la dans l'eau,\nÇa fera un escargot,\nTout chaud !\"\n\nJe la mets dans mon chapeau,\nElle me dit qu'il fait trop chaud.\nJe la mets dans mon tiroir,\nElle me dit qu'il fait trop noir.\nJe la mets dans ma culotte,\nElle me fait trois petites crottes." },
+			
+            { word: "Poissons", color: "blue", title: "Les petits poissons dans l'eau", lyrics: "Les petits poissons, dans l’eau,\nNagent, nagent, nagent, nagent, nagent.\nLes petits poissons, dans l’eau,\nNagent aussi bien que les gros.\n\nLes gros, les petits, nagent bien aussi,\nLes petits, les gros, nagent comme il faut.", yt: "https://m.youtube.com/results?search_query=les+petits+poissons+dans+l'eau", spoti: "https://open.spotify.com/search/les%20petits%20poissons%20dans%20l'eau" },
+			
+            { word: "Santiano", color: "blue", title: "Santiano", lyrics: "C'est un fameux trois-mâts, fin comme un oiseau,\n(Hissez haut, Santiano)\nDix-huit nœuds, quatre cents tonneaux,\nJe suis fier d'y être matelot.\nTiens bon la vague, et tiens bon le vent,\nHissez haut, Santiano.\nSi Dieu veut, toujours droit devant,\n(Nous irons jusqu'à San Francisco).\n\nJe pars pour de longs mois en laissant Margot,\n(Hissez haut, Santiano)\nD'y penser, j'avais le cœur gros,\n(En doublant les feux de Saint-Malo).\nTiens bon la vague et tiens bon le vent,\nHissez haut (hissez haut, Santiano).\nSi Dieu veut, toujours droit devant,\n(Nous irons jusqu'à San Francisco).\n\nOn prétend que là-bas, l'argent coule à flots,\n(Hissez haut, Santiano)\nOn trouve l'or au fond des ruisseaux,\n(J'en ramènerai plusieurs lingots).\nTiens bon la vague et tiens bon le vent,\nHissez haut (hissez haut, Santiano).\nSi Dieu veut, toujours droit devant,\n(Nous irons jusqu'à San Francisco).\n\nUn jour, je reviendrai, chargé de cadeaux,\n(Hissez haut, Santiano)\nAu pays, j'irai voir Margot,\n(À son doigt, je passerai l'anneau).\nTiens bon le cap et tiens bon le flot,\nHissez haut (hissez haut, Santiano).\nSur la mer qui fait le gros dos,\n(Nous irons jusqu'à San Francisco).", yt: "https://m.youtube.com/results?search_query=santiano+hugues+aufray", spoti: "https://open.spotify.com/search/santiano" },
+			
+            { word: "Choux", color: "green",  title: "Savez-vous planter les choux", lyrics: "Savez-vous planter les choux,\nÀ la mode, à la mode,\nSavez-vous planter les choux,\nÀ la mode, à la mode de chez vous.\n\nOn les plante avec le doigt,\nOn les plante avec le doigt,\nÀ la mode, à la mode,\nÀ la mode de chez nous.\n\nOn les plante avec la main,\nOn les plante avec la main,\nÀ la mode, à la mode,\nÀ la mode de chez nous.\n\nOn les plante avec la tête,\nOn les plante avec la tête,\nÀ la mode, à la mode,\nÀ la mode de chez nous.\n\nOn les plante avec le coude,\nOn les plante avec le coude,\nÀ la mode, à la mode,\nÀ la mode de chez nous.\n\nOn les plante avec le pied,\nOn les plante avec le pied,\nÀ la mode, à la mode,\nÀ la mode de chez nous.", yt: "https://m.youtube.com/results?search_query=savez+vous+planter+les+choux", spoti: "https://open.spotify.com/search/savez%20vous%20planter%20les%20choux" },
+			
+            { word: "Amour-", color: "red", title: "Le temps de l'amour", lyrics: "C'est le temps de l'amour, le temps des copains,\nEt de l'aventure.\nQuand le temps va et vient, on ne pense à rien,\nMalgré ses blessures.\n\nCar le temps de l'amour, c'est long et c'est court,\nÇa dure toujours, on s'en souvient.\nOn se dit qu'à 20 ans, on est les rois du monde,\nEt qu'éternellement, il y aura dans nos yeux tout le ciel bleu.\n\nC'est le temps de l'amour, le temps des copains,\nEt de l'aventure.\nQuand le temps va et vient, on ne pense à rien,\nMalgré ses blessures.\n\nCar le temps de l'amour, ça vous met au cœur\nBeaucoup de chaleur,\nEt de bonheur.\n\nUn beau jour c'est l'amour et le cœur bat plus vite,\nCar la vie suit son cours et l'on est tout heureux\nD'être amoureux.\n\nC'est le temps de l'amour, le temps des copains,\nEt de l'aventure.\nQuand le temps va et vient, on ne pense à rien,\nMalgré ses blessures.\n\nCar le temps de l'amour, c'est long et c'est court,\nÇa dure toujours,\nOn s'en souvient.", yt: "https://m.youtube.com/results?search_query=le+temps+de+l'amour+françoise+hardy", spoti: "https://open.spotify.com/search/le%20temps%20de%20l'amour" },
+			
+            { word: "Cerises", color: "red", title: "Le Temps des cerises", lyrics: "Quand nous chanterons, le temps des cerises,\nEt gai rossignol et merle moqueur,\nSeront tous en fête.\nLes belles auront la folie en tête,\nEt les amoureux du soleil au cœur,\nQuand nous chanterons, le temps des cerises,\nSifflera bien mieux le merle moqueur.\n\nMais il est bien court, le temps des cerises,\nOù l’on s’en va deux cueillir en rêvant,\nDes pendants d’oreilles,\nCerises d’amour aux robes pareilles,\nTombant sous la feuille en gouttes de sang.\nMais il est bien court, le temps des cerises,\nPendant de corail qu’on cueille en rêvant.\n\nQuand vous en serez au temps des cerises,\nSi vous avez peur des chagrins d’amour,\nÉvitez les belles !\nMoi qui ne crains pas les peines cruelles,\nJe ne vivrai point sans souffrir un jour.\nQuand vous en serez au temps des cerises,\nVous aurez aussi des peines d’amour.\n\nJ’aimerai toujours le temps des cerises,\nC’est de ce temps-là que je garde au cœur\nUne plaie ouverte.\nEt Dame Fortune, en m’étant offerte,\nNe pourra jamais fermer ma douleur.\nJ’aimerai toujours le temps des cerises,\nEt le souvenir que je garde au cœur.", yt: "https://m.youtube.com/results?search_query=le+temps+des+cerises", spoti: "https://open.spotify.com/search/le%20temps%20des%20cerises" },
+			
+            { word: "Tête", "color": "rose", title: "Tête, épaules, genoux et pieds", lyrics: "Tête, épaules, genoux et pieds,\nGenoux et pieds.\nTête, épaules, genoux et pieds,\nGenoux et pieds.\n\nJ’ai deux yeux, deux oreilles,\nUne bouche et un nez.\nTête, épaules, genoux et pieds,\nGenoux et pieds.", yt: "https://m.youtube.com/results?search_query=tête+épaules+genoux+et+pieds", spoti: "https://open.spotify.com/search/tête%20épaules%20genoux%20et%20pieds" },
+			
+            { word: "Douce", title: "Une chanson douce", lyrics: "Une chanson douce\nQue me chantait ma maman\nEn suçant mon pouce\nJ'écoutais en m'endormant\nCette chanson douce\nJe veux la chanter pour toi\nCar ta peau est douce\nComme la mousse des bois\n\nLa petite biche est aux abois\nDans le bois, se cache le loup\nOuh, ouh, ouh, ouh\nMais le brave chevalier passa\nIl prit la biche dans ses bras\nLa, la, la, la\nLa petite biche\nCe sera toi, si tu veux\nLe loup, on s'en fiche\nContre lui, nous serons deux\n\nUne chanson douce\nPour tous les petits enfants\nUne chanson douce\nQue me chantait ma maman\nOh le joli conte que voilà\nLa biche, en femme, se changea\nLa, la, la, la\nEt dans les bras du beau chevalier\nBelle princesse elle est restée\nÀ tout jamais\n\nUne chanson douce\nQue me chantait ma maman\nEn suçant mon pouce\nJ'écoutais en m'endormant\nCette chanson douce\nJe veux la chanter aussi\nPour toi, oh ma douce\nJusqu'à la fin de ma vie\nJusqu'à la fin de ma vie\nJusqu'à la fin de ma vie", yt: "https://m.youtube.com/results?search_query=une+chanson+douce+henri+salvador", spoti: "https://open.spotify.com/search/une%20chanson%20douce" },
+			
+            { word: "Vive", color: "blue", title: "Vive le vent", lyrics: "Vive le vent Vive le vent Vive le vent d’hiver\nQui s’en va sifflant soufflant Dans les grands sapins verts, Oh !\nVive le temps Vive le temps Vive le temps d’hiver\nBoule de neige et jour de l’an Et bonne année grand-mère\n\nSur le long chemin Tout blanc de neige blanche\nUn vieux monsieur s’avance Avec sa canne dans la main\nEt tout là-haut le vent Qui siffle dans les branches\nLui souffle la romance Qu’il chantait petit enfant Oh !\n\nVive le vent Vive le vent Vive le vent d’hiver\nQui s’en va sifflant soufflant Dans les grands sapins verts, Oh !\nVive le temps Vive le temps Vive le temps d’hiver\nBoule de neige et jour de l’an Et bonne année grand-mère\n\nEt le vieux monsieur Descend vers le village\nC’est l’heure où tout est sage Et l’ombre danse au coin du feu.\nMais dans chaque maison Il flotte un air de fête\nPartout la table est prête Et l’on entend la même chanson. Oh !\n\nVive le vent Vive le vent Vive le vent d’hiver\nQui s’en va sifflant soufflant Dans les grands sapins verts, Oh !\nVive le temps Vive le temps Vive le temps d’hiver\nBoule de neige et jour de l’an Et bonne année grand-mère\n\nJoyeux joyeux Noël, Aux mille bougies\nQu’enchantent vers le ciel Les cloches de la nuit\nEt dans chaque maison, il flotte un air de fête\nPartout la tabl’est prêt’ et l’on entend la mêm’ chanson oh!\n\nVive le vent Vive le vent Vive le vent d’hiver\nQui s’en va sifflant soufflant Dans les grands sapins verts, Oh !\nVive le temps Vive le temps Vive le temps d’hiver\nBoule de neige et jour de l’an Et bonne année grand-mère\n\nVive le vent Vive le vent Vive le vent d’hiver\nQui s’en va sifflant soufflant Dans les grands sapins verts, Oh !\nVive le temps Vive le temps Vive le temps d’hiver\nBoule de neige et jour de l’an\nEt bonne an-née grand-MERE", yt: "https://m.youtube.com/results?search_query=vive+le+vent", spoti: "https://open.spotify.com/search/vive%20le%20vent" },
+			
+            { word: "Patrouilles", color: "green", title: "Cantique des patrouilles", lyrics: "Seigneur, rassemblés près des tentes\nPour saluer la fin du jour,\nTes fils laissent leurs voix chantantes\nVoler vers Toi, pleines d’amour :\nTu dois aimer l’humble prière\nQui de ce camp s’en va monter,\nO Toi, qui n’avait sur la terre\nPas de maison pour t’abriter !\n\nRefrain\nNous venons toutes les patrouilles,\nTe prier pour Te servir mieux,\nVois au bois silencieux,\nTes scouts qui s’agenouillent !\nBénis-les, ô Jésus dans les Cieux !\n\nMerci de ce jour d’existence\nOù Ta bonté nous conserva ;\nMerci de Ta sainte présence\nQui de tout mal nous préserva.\nMerci du bien fait par la troupe,\nMerci des bons conseils reçus,\nMerci de l’amour qui nous groupe\nComme des frères, ô Jésus.\n\nRefrain\n\nNos cœurs ont-ils perdu Ta grâce ?\nPardonne encore à nos erreurs ;\nSeigneur, que Ta clémence efface\nLes péchés de Tes éclaireurs.\nEt que rempli de l’allégresse\nD’avoir répété son serment,\nChacun s’endorme en la promesse\nDe Te servir fidèlement.\n\nRefrain\n\nÔ Toi qui veillais Tes apôtres\nEt les bordais durant la nuit,\nDéfends notre camp et les autres\nDes rondes du Malin Esprit !\nMonte la garde, ô notre Guide,\nAfin que nous puissions demain\nOuvrir des yeux toujours limpides\nDevant l’Étoile du Matin.\n\nRefrain", yt: "https://m.youtube.com/results?search_query=cantique+des+patrouilles", spoti: "https://open.spotify.com/search/cantique%20des%20patrouilles" },
+			
+            { word: "Caribou", color: "green", title: "Caribou", lyrics: "Il est perdu le temps déjà\nOù nous jouions toi et moi\nAux indiens dans la forêt\nNous avions construit dans les bois\nUne cabane de bois\nOù nous allions nous cacher\nTu allumais du feu pour nous\nTu t'appellais Caribou\nTu étais le roi des sioux\n\nOn faisait la chasse aux oiseaux\nOn descendait les ruisseaux\nDans notre petit canot\nEnsemble nous étions heureux\nJ'accrochais après nos jeux\nUne plume à mes cheveux\nOn regardait le soir tomber\nEt c'était avec regret\nQu'à la maison on rentrait\n\nIl est perdu le temps déjà\nOù nous jouions toi et moi\nAux indiens dans la forêt\nEt je le regrette le temps\nLe temps de nos jeux d'enfants\nDes indiens et des poupées\nQu'es-tu devenu mon copain\nMon copain le chef indien\nQui me prenait par la main\n\nEt quelquefois j'ai bien envie\nSur les chantiers de la vie\nDe revoir mon chef indien\nDe revoir mon chef indien\nDe revoir mon chef indien", yt: "https://m.youtube.com/results?search_query=caribou+chanson", spoti: "https://open.spotify.com/search/caribou" },
+			
+            { word: "Champs", color: "amber", title: "Les Champs-Élysées", lyrics: "Je m'baladais sur l'avenue\nLe cœur ouvert à l'inconnu\nJ'avais envie de dire \"bonjour\"\nÀ n’importe qui\nN'importe qui et ce fut toi\nJe t'ai dit n'importe quoi\nIl suffisait de te parler\nPour t'apprivoiser\n\nAux Champs-Elysées, aux Champs-Elysées\nAu soleil, sous la pluie\nÀ midi ou à minuit\nIl y a tout ce que vous voulez\nAux Champs-Elysées\n\nTu m'as dit \"J'ai rendez-vous\"\nDans un sous-sol avec des fous\nQui vivent la guitare à la main\nDu soir au matin\nAlors je t'ai accompagnée\nOn a chanté, on a dansé\nEt l'on n'a même pas pensé à s'embrasser\n\nAux Champs-Elysées, aux Champs-Elysées\nAu soleil, sous la pluie, à midi ou à minuit\nIl y a tout ce que vous voulez aux Champs-Elysées\n\nHier soir deux inconnus\nEt ce matin sur l'avenue\nDeux amoureux tout étourdis\nPar la longue nuit\nEt de l'Étoile à la Concorde\nUn orchestre à mille cordes\nTous les oiseaux du point du jour\nChantent l'amour\n\nAux Champs-Elysées, aux Champs-Elysées\nAu soleil, sous la pluie, à midi ou à minuit\nIl y a tout ce que vous voulez aux Champs-Elysées\n\nAux Champs-Elysées, aux Champs-Elysées\nAu soleil, sous la pluie, à midi ou à minuit\nIl y a tout ce que vous voulez aux Champs-Elysées\n\nAux Champs-Elysées, aux Champs-Elysées\nAu soleil, sous la pluie, à midi ou à minuit\nIl y a tout ce que vous voulez aux Champs-Elysées", yt: "https://m.youtube.com/results?search_query=les+champs+elysees+joe+dassin", spoti: "https://open.spotify.com/search/les%20champs%20elysees" },
+			
+            { word: "Colchiques", color: "purple", title: "Colchiques dans les prés", lyrics: "Colchiques dans les prés\nFleurissent, fleurissent\nColchiques dans les prés\nC'est la fin de l'été\nLa feuille d'automne\nEmportée par le vent\nEn rondes monotones\nTombant, tourbillonnant\n\nChâtaignes dans les bois\nSe fendent, se fendent\nChâtaignes dans les bois\nSe fendent sous nos pas\nLa feuille d'automne\nEmportée par le vent\nEn rondes monotones\nTombant, tourbillonnant\n\nNuage dans le ciel\nS'étire, s'étire\nNuage dans le ciel\nS'étire comme une aile\nLa feuille d'automne\nEmportée par le vent\nEn rondes monotones\nTombant, tourbillonnant\n\nEt ce chant dans mon cœur\nMurmure, murmure\nEt ce chant dans mon cœur\nMurmure le bonheur\nLa feuille d'automne\nEmportée par le vent\nEn rondes monotones\nTombant, tourbillonnant\n\nLa feuille d'automne\nEmportée par le vent\nEn rondes monotones\nTombant, tourbillonnant", yt: "https://m.youtube.com/results?search_query=colchique+dans+les+pres", spoti: "https://open.spotify.com/search/colchique%20dans%20les%20pres" },
+			
+            { word: "Cosaques", color: "green", title: "Les Cosaques", lyrics: "Nous aimons vivre au fond des bois\nAller coucher sur la dure\nLa forêt nous dit de ses mille voix\n\"Lance toi dans la grande aventure\"\n\"Lance toi dans la grande aventure\"\n\nLa, lala, lalala, lala, lalala, lalalalalalal-la\nLa, lala, lalalalalalala, lalala, lalalalala, lala\nLa, lala, lalalalalalala, lalala, lalalalala, lala.\n\nNous aimons vivre sur nos chevaux\nDans les plaines du Caucase\nEmportés par leur rapide galop\nNous allons plus vite que Pégase\nNous allons plus vite que Pégase\n\nLa, lala, lalala, lala, lalala, lalalalalalal-la\nLa, lala, lalalalalalala, lalala, lalalalala, lala\nLa, lala, lalalalalalala, lalala, lalalalala, lala.\n\nNous aimons vivre auprès du feu\nEt chanter sous les étoiles\nLa nuit claire nous dit de ses mille feux\nSois gai lorsque le ciel est sans voile\nSois gai lorsque le ciel est sans voile", yt: "https://m.youtube.com/results?search_query=les+cosaques+chanson", spoti: "https://open.spotify.com/search/les%20cosaques" },
+			
+            { word: "Bocage", color: "green", title: "Dans un bocage", lyrics: "Dans un bocage, couvert de feuillage\nQui fleurira au milieu des prés\nCelle que j'aime n'est pas ici\nL'amour extrême Ah! la voici\n\nAh! La voici, la voici, la voilà\nCelle que mon cœur aime\nAh! La voici, la voici, la voilà\nCelle que mon cœur aimera\n\nNe la laissez pas passer\nSans lui faire un doux baiser\nMets tes pieds dans la purée\nÇa fera un bon dîner pour bébé.", yt: "https://m.youtube.com/results?search_query=dans+un+bocage", spoti: "https://open.spotify.com/search/dans%20un%20bocage" },
+			
+            { word: "Lorraine", color: "amber", title: "En passant par la Lorraine", lyrics: "En passant par la Lorraine, avec mes sabots.\nEn passant par la Lorraine, avec mes sabots.\nRencontrai trois capitaines,\nAvec mes sabots, dondaine,\nOh ! Oh ! OH ! Avec mes sabots.\n\nRencontrai trois capitaines, avec mes sabots.\nRencontrai trois capitaines, avec mes sabots.\nIls m’ont appelée : Vilaine !\nAvec mes sabots, dondaine,\nOh ! Oh ! OH ! Avec mes sabots.\n\nIls m’ont appelée : Vilaine ! avec mes sabots.\nIls m’ont appelée : Vilaine ! avec mes sabots.\nJe ne suis pas si vilaine,\nAvec mes sabots, dondaine,\nOh ! Oh ! OH ! Avec mes sabots.\n\nPuisque le fils du roi m’aime, avec mes sabots.\nPuisque le fils du roi m’aime, avec mes sabots.\nIl m’a donné pour étrenne,\nAvec mes sabots, dondaine,\nOh ! Oh ! OH ! Avec mes sabots.\n\nUn bouquet de marjolaine, avec mes sabots.\nUn bouquet de marjolaine, avec mes sabots.\nJe l’ai planté sur la plaine,\nAvec mes sabots, dondaine,\nOh ! Oh ! OH ! Avec mes sabots.\n\nS’il fleurit, je serai reine, avec mes sabots.\nS’il fleurit, je serai reine, avec mes sabots.\nS’il y meurt, je perds ma peine,\nAvec mes sabots, dondaine,\nOh ! Oh ! OH ! Avec mes sabots.", yt: "https://m.youtube.com/results?search_query=en+passant+par+la+lorraine", spoti: "https://open.spotify.com/search/en%20passant%20par%20la%20lorraine" },
+			
+            { word: "Evenou", color: "amber", title: "Evenou Shalom Alechem", lyrics: "Evenou shalom alerhem !\nEvenou shalom alerhem !\nEvenou shalom alerhem !\nEvenou shalom, shalom, shalom alerhem !\n\nLa paix de Dieu soit avec nous !\nLa paix de Dieu soit avec nous !\nLa paix de Dieu, le don du Très-Haut,\nL'Esprit de Dieu dans l'homme,\nPaix de Jésus-Christ !\n\nLa joie de Dieu soit avec nous !\nLa joie de Dieu soit avec nous !\nLa joie de Dieu, le don du Très-Haut,\nL'Esprit de Dieu dans l'homme,\nJoie de Jésus-Christ !\n\nLa paix de Dieu, va l'annoncer !\nLa paix de Dieu va la semer !\nLa paix de Dieu au cœur de ta vie,\nL'Esprit de Dieu dans l'homme,\nSigne de l'Amour !\n\nLa joie de Dieu, va l'annoncer !\nLa joie de Dieu va la semer !\nLa joie de Dieu au cœur de ta vie,\nL'Esprit de Dieu dans l'homme,\nSigne de l'Amour !", yt: "https://m.youtube.com/results?search_query=evenou+shalom+alechem", spoti: "https://open.spotify.com/search/evenou%20shalom%20alechem" },
+			
+            { word: "Colas", color: "amber", title: "Fais dodo Colas mon p'tit frère", lyrics: "Fais dodo, Colas mon p'tit frère,\nFais dodo, t'auras du lolo.\nMaman est en haut,\nQui fait du gâteau,\nPapa est en bas,\nQui fait du chocolat.\nFais dodo, Colas mon p'tit frère,\nFais dodo, t'auras du lolo.\nFais dodo, Colas mon p'tit frère,\nFais dodo, t'auras du lolo.\nTa sœur est en haut,\nQui fait des chapeaux,\nTon frère est en bas,\nQui fait des nougats.\nFais dodo, Colas mon p'tit frère,\nFais dodo, t'auras du lolo.\nTon cousin Gaston\nFait des gros bonbons,\nTa cousine Charlotte\nFait de la compote.\nFais dodo, Colas mon p'tit frère,\nFais dodo, t'auras du lolo.\nFais dodo, Colas mon p'tit frère,\nFais dodo, t'auras du lolo.", yt: "https://m.youtube.com/results?search_query=fais+dodo+colas+mon+petit+frere", spoti: "https://open.spotify.com/search/fais%20dodo%20colas" },
+			
+            { word: "Coquelicot", color: "red", title: "Gentil coquelicot", lyrics: "J’ai descendu dans mon jardin\nJ’ai descendu dans mon jardin\nPour y cueillir du romarin.\nGentil coq’licot, Mesdames.\nGentil coq’licot nouveau.\n\nPour y cueillir du romarin\nPour y cueillir du romarin\nJ’n’en avais pas cueilli trois brins :\nGentil coq’licot, Mesdames.\nGentil coq’licot nouveau.\n\nJ’n’en avais pas cueilli trois brins,\nJ’n’en avais pas cueilli trois brins,\nQu’un rossignol vint sur ma main :\nGentil coq’licot, Mesdames.\nGentil coq’licot nouveau.\n\nQu’un rossignol vint sur ma main,\nQu’un rossignol vint sur ma main,\nIl me dit trois mots en latin :\nGentil coq’licot, Mesdames.\nGentil coq’licot nouveau.\n\nIl me dit trois mots en latin,\nIl me dit trois mots en latin,\nQue les hommes ne valent rien :\nGentil coq’licot, Mesdames.\nGentil coq’licot nouveau.\n\nQue les hommes ne valent rien,\nQue les hommes ne valent rien,\nEt les garçons encor bien moins :\nGentil coq’licot, Mesdames.\nGentil coq’licot nouveau.\n\nEt les garçons encor bien moins,\nEt les garçons encor bien moins,\nDes dames il ne me dit rien :\nGentil coq’licot, Mesdames.\nGentil coq’licot nouveau.\n\nDes dames il ne me dit rien,\nDes dames il ne me dit rien,\nMais des demoiselles beaucoup de bien :\nGentil coq’licot, Mesdames.\nGentil coq’licot nouveau.", yt: "https://m.youtube.com/results?search_query=gentil+coquelicot", spoti: "https://open.spotify.com/search/gentil%20coquelicot" },
+			
+            { word: "Cerf", color: "green", title: "Un grand cerf", lyrics: "Dans sa maison un grand cerf,\nRegardait par la fenêtre\nUn lapin venir à lui\nEt frapper ainsi :\n« Cerf, cerf ouvre-moi,\nOu le chasseur me tuera !\n— Lapin, lapin, entre et viens\nMe serrer la main. »", yt: "https://m.youtube.com/results?search_query=un+grand+cerf", spoti: "https://open.spotify.com/search/un%20grand%20cerf" },
+			
+            { word: "Clarinette", color: "rose", title: "J'ai perdu le do de ma clarinette", lyrics: "J'ai perdu le do de ma clarinette\nJ'ai perdu le do de ma clarinette\nAh, si papa savait ça, tra la-la\nAh, si papa savait ça, tra la-la\nIl dirait ohé\nIl chanterait ohé\nAu pas, camarade, au pas, camarade\nAu pas, au pas, au pas\nAu pas, camarade, au pas, camarade\nAu pas, au pas, au pas\n\nJ'ai perdu le do, le ré, le mi de ma clarinette\nAh, si papa savait ça, tra la-la\nAh, si papa savait ça, tra la-la\nIl dirait ohé\nIl chanterait ohé\nAu pas, camarade, au pas, camarade\nAu pas, au pas, au pas\nAu pas, camarade, au pas, camarade\nAu pas, au pas, au pas\n\nJ'ai perdu le do, le ré, le mi, le fa, le sol de ma clarinette\nAh, si papa savait ça, tra la-la\nAh, si papa savait ça, tra la-la\nIl dirait ohé\nIl chanterait ohé\nAu pas, camarade, au pas, camarade\nAu pas, au pas, au pas\nAu pas, camarade, au pas, camarade\nAu pas, au pas, au pas\n\nJ'ai perdu le do, le ré, le mi, le fa, le sol, le la, le si de ma clarinette\nAh, si papa savait ça, tra la-la\nAh, si papa savait ça, tra la-la\nIl dirait ohé\nIl chanterait ohé\nAu pas, camarade, au pas, camarade\nAu pas, au pas, au pas\nAu pas, camarade, au pas, camarade\nAu pas, au pas, au pas", yt: "https://m.youtube.com/results?search_query=j'ai+perdu+le+do+de+ma+clarinette", spoti: "https://open.spotify.com/search/j'ai%20perdu%20le%20do%20de%20ma%20clarinette" },
+			
+            { word: "Nez", color: "red", title: "J'ai un gros nez rouge", lyrics: "J'ai un gros nez rouge\nDeux traits sur les yeux\nUn chapeau qui bouge\nUn air malicieux\nDeux grandes savates\nUn grand pantalon\nEt quand je me gratte\nJe saute au plafond", yt: "https://m.youtube.com/results?search_query=j'ai+un+gros+nez+rouge", spoti: "https://open.spotify.com/search/j'ai%20un%20gros%20nez%20rouge" },
+			
+            { word: "Petit", color: "rose", title: "Je me suis fait tout petit", lyrics: "Je n'avais jamais ôté mon chapeau\nDevant personne\nMaintenant, je rampe et je fais le beau\nQuand elle me sonne\nJ'étais chien méchant, elle me fait manger\nDans sa menotte\nJ'avais des dents d'loup, je les ai changés\nPour des quenottes\n\nJe m'suis fait tout petit devant une poupée\nQui ferme les yeux quand on la couche\nJe m'suis fait tout petit devant une poupée\nQui fait Maman quand on la touche\n\nJ'étais dur à cuire, elle m'a converti\nLa fine mouche\nEt je suis tombé tout chaud, tout rôti\nContre sa bouche\nQui a des dents de lait quand elle sourit\nQuand elle chante\nEt des dents de loup, quand elle est furie\nQu'elle est méchante\n\nJe m'suis fait tout petit devant une poupée\nQui ferme les yeux quand on la couche\nJe m'suis fait tout petit devant une poupée\nQui fait Maman quand on la touche\n\nJe subis sa loi, je file tout doux\nSous son empire\nBien qu'elle soit jalouse au-delà de tout\nEt même pire\nUne jolie pervenche qui m'avait paru\nPlus jolie qu'elle\nUne jolie pervenche un jour en mourut\nÀ coups d'ombrelle\n\nJe m'suis fait tout petit devant une poupée\nQui ferme les yeux quand on la couche\nJe m'suis fait tout petit devant une poupée\nQui fait Maman quand on la touche\n\nTous les somnambules, tous les mages m'ont\nDit sans malice\nQu'en ses bras en croix, je subirai mon\nDernier supplice\nIl en est de pires, il en est d'meilleurs\nMais à tout prendre\nQu'on se pende ici, qu'on se pende ailleurs\nS'il faut se pendre\n\nJe m'suis fait tout petit devant une poupée\nQui ferme les yeux quand on la couche\nJe m'suis fait tout petit devant une poupée\nQui fait Maman quand on la touche", yt: "https://m.youtube.com/results?search_query=je+me+suis+fait+tout+petit+brassens", spoti: "https://open.spotify.com/search/je%20me%20suis%20fait%20tout%20petit" },
+			
+            { word: "Furet", color: "green", title: "Il court, il court, le furet", lyrics: "Il court, il court, le furet,\nLe furet du bois, mesdames\nIl court, il court, le furet,\nLe furet du bois joli\nIl est passé par ici,\nIl repassera par là\n\nIl court, il court, le furet,\nLe furet du bois, mesdames\nIl court, il court, le furet,\nLe furet du bois joli\nIl est passé par ici,\nIl repassera par là\n\nIl court, il court, le furet,\nLe furet du bois, mesdames\nIl court, il court, le furet,\nLe furet du bois joli\nIl est passé par ici,\nIl va repasser par là", yt: "https://m.youtube.com/results?search_query=il+court+il+court+le+furet", spoti: "https://open.spotify.com/search/il%20court%20il%20court%20le%20furet" },
+			
+            { word: "Pirouette", color: "amber", title: "Il était un petit homme (Pirouette)", lyrics: "Il était un petit homme\nPirouette, cacahuète\nIl était un petit homme,\nQui avait une drôle de maison.\nIl était un petit homme,\nQui avait une drôle de maison.\nLa maison est en carton,\nPirouette, cacahuète,\nLa maison est en carton,\nLes escaliers sont en papier.\nLes escaliers sont en papier.\nSi vous voulez y monter,\nPirouette, cacahuète,\nSi vous voulez y monter,\nVous vous casserez le bout du nez.\nVous vous casserez le bout du nez.\nLe facteur y est monté,\nPirouette, cacahuète,\nLe facteur y est monté,\nIl s’est cassé le bout du nez.\nIl s’est cassé le bout du nez.\nOn lui a raccommodé,\nPirouette, cacahuète,\nOn lui a raccommodé,\nAvec du joli fil doré.\nAvec du joli fil doré.\nLe beau fil s’est cassé,\nPirouette, cacahuète,\nLe beau fil s’est cassé,\nLe bout du nez s’est envolé.\nLe bout du nez s’est envolé.\nUn avion à réaction,\nPirouette, cacahuète,\nUn avion à réaction,\nA rattrapé le bout du nez.\nA rattrapé le bout du nez.\n\n", yt: "https://m.youtube.com/results?search_query=pirouette+cacahuete", spoti: "https://open.spotify.com/search/pirouette%20cacahuete" },
+			
+            { word: "Navire", color: "blue", title: "Il était un petit navire", lyrics: "Il était un petit navire\nIl était un petit navire\nIl était un petit navire\nQui n'avait ja-ja-jamais navigué\nQui n'avait ja-ja-jamais navigué\nOhé, ohé…\nIl partit pour un long voyage\nIl partit pour un long voyage\nSur la mer Mé-Mé-Méditerrannée\nSur la mer Mé-Mé-Méditerrannée\nOhé, ohé…\nRefrain\nOhé, ohé Matelot\nMatelot navigue sur les flots\nOhé, ohé Matelot\nMatelot navigue sur les flots\nAu bout de cinq à six semaines\nAu bout de cinq à six semaines\nLes vivres vin-vin-vinrent à manquer\nLes vivres vin-vin-vinrent à manquer\nOhé, ohé…\nOn tira à la courte paille\nOn tira à la courte paille\nPour savoir qui-qui-qui serait mangé\nPour savoir qui-qui-qui serait mangé\nOhé, ohé…\nLe sort tomba sur le plus jeune\nLe sort tomba sur le plus jeune\nC'est donc lui qui-qui-qui sera mangé\nC'est donc lui qui-qui-qui sera mangé\nOhé, ohé…\nRefrain\nOn cherche alors à quelle sauce\nOn cherche alors à quelle sauce\nLe pauvre enfant-fant-fant sera mangé\nLe pauvre enfant-fant-fant sera mangé\nOhé, ohé…\nL'un voulait qu'on le mît à frire\nL'un voulait qu'on le mît à frire\nL'autre voulait-lait-lait le fricasser\nL'autre voulait-lait-lait le fricasser\nOhé, ohé…\nPendant qu'ainsi l'on délibère\nPendant qu'ainsi l'on délibère\nIl monte en haut-haut-haut du grand hunier\nIl monte en haut-haut-haut du grand hunier\nOhé, ohé…\nRefrain\nIl fait au ciel une prière\nIl fait au ciel une prière\nInterrogeant-geant-geant l'immensité\nInterrogeant-geant-geant l'immensité\nOhé, ohé…\nMais regardant la mer entière\nMais regardant la mer entière\nIl vit des flots-flots-flots de tous côtés\nIl vit des flots-flots-flots de tous côtés\nOhé, ohé…\nÔ Sainte Vierge, ô ma patronne\nSi j'ai péché vite pardonne\nEmpêche-les de-de-de me manger\nEmpêche-les de-de-de me manger\nOhé, ohé…\nRefrain\nAu même instant un grand miracle\nAu même instant un grand miracle\nPour l'enfant fut-fut-fut réalisé\nPour l'enfant fut-fut-fut réalisé\nOhé, ohé…\nDes petits poissons dans le navire\nDes p'tits poissons dans le navire\nSautèrent par-par-par et par milliers\nSautèrent par-par-par et par milliers\nOhé, ohé…\nOn les prit on les mit à frire\nOn les prit on les mit à frire\nIl était un petit navire\nLe jeune mousse-mousse-mousse fut sauvé\nLe jeune mousse-mousse-mousse fut sauvé\nOhé, ohé…\nSi cette histoire vous amuse\nSi cette histoire vous amuse\nNous allons la-la-la recommencer\nNous allons la-la-la recommencer\nOhé, ohé…", yt: "https://m.youtube.com/results?search_query=il+etait+un+petit+navire", spoti: "https://open.spotify.com/search/il%20etait%20un%20petit%20navire" },
+			
+            { word: "Bergère", color: "amber", title: "Il était une bergère", lyrics: "1.\nIl était une bergère,\nEt ron, ron, ron, petit patapon;\nIl était un' bergère,\nQui gardait ses moutons,\nRon, ron,\nQui gardait ses moutons.\n\n\n2.\nElle fit un fromage,\nEt ron, ron, ron, petit patapon;\nElle fit un fromage,\nDu lait de ses moutons,\nRon, ron,\nDu lait de ses moutons.\n\n\n3.\nLe chat qui la regarde,\nEt ron, ron, ron, petit patapon\nLe chat qui la regarde,\nD'un petit air fripon,\nRon, ron,\nD'un petit air fripon.\n\n\n4.\n« Si tu y mets la patte,\nEt ron, ron, ron, petit patapon;\nSi tu y mets la patte,\nTu auras du bâton,\nRon, ron,\nTu auras du bâton. »\n\n\n5.\nIl n'y mit pas la patte,\nEt ron, ron, ron, petit patapon;\nIl n'y mit pas la patte,\nIl y mit le menton,\nRon, ron,\nIl y mit le menton.\n\n\n6.\nLa bergère en colère,\nEt ron, ron, ron, petit patapon;\nLa bergère en colère,\nTua son p'tit chaton,\nRon, ron,\nTua son p'tit chaton.", yt: "https://m.youtube.com/results?search_query=il+etait+une+bergere", spoti: "https://open.spotify.com/search/il%20etait%20une%20bergere" },
+			
+            { word: "Bateaux", color: "blue", title: "Maman les p'tits bateaux", lyrics: "Maman les p'tits bateaux\nQui vont sur l'eau ont-ils des jambes ?\nMais oui mon gros béta\nS'ils n'en avaient pas\nIls ne march'raient pas\n1\nAllant droit devant eux,\nIls font le tour du monde.\nMais comme la terre est ronde,\nIls reviennent chez eux.\n2\nVa quand tu seras grand\nTu sauras comment faire\nPour lutter vaillamment\nContre la mer et l'vent", yt: "https://m.youtube.com/results?search_query=maman+les+petits+bateaux", spoti: "https://open.spotify.com/search/maman%20les%20petits%20bateaux" },
+			
+            { word: "Petrouchka", color: "green", title: "Le marchand Petrouchka", lyrics: "C'est le marchand\nPétrouchka qui revient\nD'or est chargé son sac\nEt il est content\nQuand ses chevaux\nFatigués auront bu\nJusqu'au matin\nIl pourra rire et chanter", yt: "https://m.youtube.com/results?search_query=le+marchand+petrouchka", spoti: "https://open.spotify.com/search/le%20marchand%20petrouchka" },
+			
+            { word: "Rois", color: "purple", title: "La marche des rois", lyrics: "De bon matin\nJ'ai rencontré le train\nDe trois grands rois qui allaient en voyage.\nDe bon matin\nJ'ai rencontré le train\nDe trois grands rois dessus le grand chemin.\n\nVenaient d'abord\nLes gardes du corps,\nDes gens armés avec trente petits pages,\nVenaient d'abord\nLes gardes du corps,\nDes gens armés dessus leurs justaucorps.\n\nPuis sur un char\nDoré de toutes parts\nOn voit trois rois modestes comme des anges,\nPuis sur un char\nDoré de toutes parts\nTrois rois debout parmi les étendards.\n\nL'étoile luit\nEt les rois conduit\nPar longs chemins devant une pauvre étable.\nL'étoile luit\nEt les rois conduit\nPar longs chemins devant l'humble réduit.\n\nAu fils de Dieu\nQui naquit en ce lieu\nIls viennent tous présenter leurs hommages,\nAu fils de Dieu\nQui naquit en ce lieu\nIls viennent tous présenter leurs doux vœux.\n\nDe beaux présents\nOr, myrrhe et encens\nIls vont offrir au maître tant admirable,\nDe beaux présents\nOr, myrrhe et encens\nIls vont offrir au bienheureux enfant", yt: "https://m.youtube.com/results?search_query=la+marche+des+rois", spoti: "https://open.spotify.com/search/la%20marche%20des%20rois" },
+			
+            { word: "Ami", color: "rose", title: "Mon amour, mon ami", lyrics: "Toi mon amour, mon ami\nQuand je rêve c'est de toi\nMon amour, mon ami\nQuand je chante c'est pour toi\nMon amour, mon ami\nJe ne peux vivre sans toi\nMon amour, mon ami\nEt je ne sais pas pourquoi\nJe n'ai pas connu d'autre garçon que toi\nSi j'en ai connu je ne m'en souviens pas\nÀ quoi bon chercher faire des comparaisons\nJ'ai un cœur qui sait quand il a raison\nEt puisqu'il a pris ton nom\nToi mon amour, mon ami\nQuand je rêve c'est de toi\nMon amour, mon ami\nQuand je chante c'est pour toi\nMon amour, mon ami\nJe ne peux vivre sans toi\nMon amour, mon ami\nEt je sais très bien pourquoi\nOn ne sait jamais jusqu'où ira l'amour\nEt moi qui croyais pouvoir t'aimer toujours\nOui je t'ai quitté et j'ai beau résister\nJe chante parfois à d'autres que toi\nUn peu moins bien chaque fois\nToi mon amour, mon ami\nQuand je rêve c'est de toi\nMon amour, mon ami\nQuand je chante c'est pour toi\nMon amour, mon ami\nJe ne peux vivre sans toi\nMon amour, mon ami\nEt je ne sais pas pourquoi\nMon amour, mon ami\nQuand je rêve c'est de toi\nMon amour, mon ami\nQuand je chante c'est pour toi\nMon amour, mon ami\nJe ne peux vivre sans toi\nMon amour, mon ami\nEt je ne sais plus pourquoi", yt: "https://m.youtube.com/results?search_query=mon+amour+mon+ami+marie+laforet", spoti: "https://open.spotify.com/search/mon%20amour%20mon%20ami" },
+			
+            { word: "Âne", color: "amber", title: "Mon petit âne gris", lyrics: "Ecoutez cette histoire\nQue l'on m'a racontée :\nDu fond de ma mémoire,\nJe vais vous la chanter.\nElle se passe en Provence\nAu milieu des moutons,\nDans le sud de la France,\nAu pays des santons,\nDans le sud de la France,\nAu pays des santons.\nQuand il vint au domaine,\nY'avait un beau troupeau.\nLes étables étaient pleines\nDe brebis et d'agneaux.\nMarchant toujours en tête\nAux premières lueurs,\nPour tirer sa charrette,\nIl mettait tout son coeur !\nPour tirer sa charrette,\nIl mettait tout son coeur !\nAu temps des transhumances,\nIl s'en allait heureux,\nRemontant la Durance,\nHonnête et courageux.\nMais un jour de Marseille,\nDes messieurs sont venus,\nLa ferme était bien vieille,\nAlors, on l'a vendue.\nLa ferme était bien vieille,\nAlors, on l'a vendue.\nIl resta au village,\nTout le monde l'aimait bien.\nVaillant malgré son âge\nEt malgré son chagrin.\nImage d'évangile,\nVivant d'humilité,\nIl se rendait utile\nAuprès du cantonnier.\nIl se rendait utile\nAuprès du cantonnier.\nCette vie honorable,\nUn soir s'est terminée.\nDans le fond d'une étable,\nTout seul, il s'est couché,\nPauvre bête de somme,\nIl a fermé les yeux.\nAbandonné des hommes,\nIl est mort sans adieux.\nAbandonné des hommes,\nIl est mort sans adieux.", yt: "https://m.youtube.com/results?search_query=mon+petit+ane+gris", spoti: "https://open.spotify.com/search/mon%20petit%20ane%20gris" },
+			
+			{ word: "Göttingen", color: "red", title: "À Göttingen", lyrics: "Bien sûr, ce n'est pas la Seine,\nCe n'est pas le bois de Vincennes,\nMais c'est bien joli tout de même,\nA Göttingen, à Göttingen.\nPas de quais et pas de rengaines\nQui se lamentent et qui se traînent,\nMais l'amour y fleurit quand même,\nA Göttingen, à Göttingen.\nIls savent mieux que nous, je pense,\nL'histoire de nos rois de France,\nHerman, Peter, Helga et Hans,\nA Göttingen.\nEt que personne ne s'offense,\nMais les contes de notre enfance,\nIl était une fois commencent\nA Göttingen.\nBien sûr nous, nous avons la Seine\nEt puis notre bois de Vincennes,\nMais Dieu que les roses sont belles\nA Göttingen, à Göttingen.\nNous, nous avons nos matins blêmes\nEt l'âme grise de Verlaine,\nEux c'est la mélancolie même,\nA Göttingen, à Göttingen.\nQuand ils ne savent rien nous dire,\nIls restent là à nous sourire\nMais nous les comprenons quand même,\nLes enfants blonds de Göttingen.\nEt tant pis pour ceux qui s'étonnent\nEt que les autres me pardonnent,\nMais les enfants ce sont les mêmes,\nA Paris ou à Göttingen.\nO faites que jamais ne revienne\nLe temps du sang et de la haine\nCar il y a des gens que j'aime,\nA Göttingen, à Göttingen.\nEt lorsque sonnerait l'alarme,\nS'il fallait reprendre les armes,\nMon coeur verserait une larme\nPour Göttingen, pour Göttingen.", yt: "https://m.youtube.com/results?search_query=a+gottingen", spoti: "https://open.spotify.com/search/a+gottingen" },
+
+			{ word: "Vent", color: "green", title: "Vent frais", lyrics: "Vent frais, vent du matin\nVent qui souffle au sommet des grands pins\nJoie du vent qui souffle, allons dans le grand vent", yt: "https://m.youtube.com/results?search_query=Vent+frais+vent+du+matin", spoti: "https://open.spotify.com/search/Vent+frais+vent+du+matin" },
+
+			{ word: "Yeux", color: "purple", title: "Les Yeux noirs", lyrics: "Dans tes grands yeux noirs\nJe me suis perdu\nJ'attends un regard\nLe cœur suspendu\nJe t'aime tellement fort\nToi qui me fais peur\nEst-ce un mauvais sort\nOu la mauvaise heure ?\n\nEt autour de nous\nChantent les tsiganes\nTout le monde s'en fout\nS'enivre au champagne\nDans tes beaux yeux noirs\nJe sombre, mon amour\nEt mon désespoir\nÀ leur chant est sourd\n\nJe perds la raison\nÀ chercher tes bras\nBrûlant de passion\nViens, embrasse-moi\nDe tes grands yeux noirs\nL'étrange lumière\nA nimbé le soir\nDe tous les mystères\n\nJe suis fou de toi\nMa belle aux yeux noirs\nMême si je n'sais pas\nOù va notre histoire\nC'est pour ma passion\nLes yeux noirs que j'ai\nFait cette chanson\nОчи черные", yt: "https://m.youtube.com/results?search_query=Les+yeux+noirs", spoti: "https://open.spotify.com/search/Les+yeux+noirs" },
+
+			{ word: "Frère", color: "purple", title: "Frère Jacques", lyrics: "Frère Jacques (2x)\nDormez-vous? (2x)\nSonnez les matines (2x)\nDing dang dong(2x)", yt: "https://m.youtube.com/results?search_query=Frère+Jacques+canon", spoti: "https://open.spotify.com/search/Frère+Jacques+canon" },
+
+			{ word: "Tourne", color: "amber", title: "Tourne, tourne, petit moulin", lyrics: "Tourne, tourne, petit moulin\nTourne, tourne, petit moulin\nFrappent, frappent, petites mains,\nVole, vole, petit oiseau,\nNage, nage, poisson dans l’eau.\n\nPetit moulin a bien tourné,\nPetites mains ont bien frappé,\nPetit oiseau a bien volé,\nPetit poisson a bien nagé.", yt: "https://m.youtube.com/results?search_query=Tourne+tourne+petit+moulin", spoti: "https://open.spotify.com/search/Tourne+tourne+petit+moulin" },
+
+			{ word: "Bois", color: "purple", title: "Nous n’irons plus au bois", lyrics: "Nous n’irons plus au bois, les lauriers sont coupés\nLa belle que voilà, ira les ramasser\n\nEntrez dans la danse, voyez comme on danse,\nSautez, dansez, embrassez qui vous voudrez.\n\nEt les lauriers du bois les laiss’rons nous faner\nNon, chacune à son tour ira les ramasser\n\nEntrez dans la danse ...\n\nSi la cigale y dort, ne faut pas la blesser\nLe chant du rossignol la viendra réveiller\n\nEntrez dans la danse ...\n\nEt aussi la fauvette avec son doux gosier\nEt Jeanne, la bergère, avec son blanc panier,\n\nEntrez dans la danse ...\n\nCigale, ma cigale, allons, il faut chanter\nCar les lauriers du bois sont déjà repoussés\n\nEntrez dans la danse ...", yt: "https://m.youtube.com/results?search_query=Nous+n+irons+plus+au+bois", spoti: "https://open.spotify.com/search/Nous+n+irons+plus+au+bois" },
+
+			{ word: "Capucine", color: "purple", title: "Dansons la capucine", lyrics: "1\nDansons la capucine\nY’a pas de pain chez nous\nY’en a chez la voisine\nMais ce n’est pas pour nous\nYou !\n2\nDansons la capucine\nY'a pas de vin chez nous\nY’en a chez la voisine\nMais ce n’est pas pour nous\nYou !\n3\nDansons la capucine\nY’a pas de feu chez nous\nY’en a chez la voisine\nMais ce n’est pas pour nous\nYou !\n4\nDansons la capucine\nY’a du plaisir chez nous\nOn pleure chez la voisine\nOn rit toujours chez nous\nYouh !", yt: "https://m.youtube.com/results?search_query=Dansons+la+capucine", spoti: "https://open.spotify.com/search/Dansons+la+capucine" },
+			
+        ];
+
+// This sorts by 'word' automatically
+        songs.sort((a, b) => a.word.localeCompare(b.word));
+
+        const searchInput = document.getElementById('searchInput');
+        const grid = document.getElementById('song-grid');
+
+        function renderSongs(filter = "") {
+            grid.innerHTML = "";
+            const filtered = songs.filter(s => 
+                s.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(filter.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")) || 
+                s.word.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            filtered.forEach((song) => {
+                const index = songs.indexOf(song);
+                const card = document.createElement('div');
+						
+			// We map your color names to Tailwind background classes
+			const colorMap = {
+				blue: "bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800",
+				green: "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800",
+				red: "bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800",
+				amber: "bg-amber-100 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800",
+				purple: "bg-purple-100 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800",
+				rose: "bg-rose-100 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800",
+				default: "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+			};
+
+			const chosenColor = colorMap[song.color] || colorMap.default;
+
+			// We apply the chosen color to the card
+			card.className = `song-card ${chosenColor} border rounded-2xl flex items-center justify-center shadow-sm active:scale-90 transition-all cursor-pointer text-center p-2`;
+			
+			// Update text color to look better on colored backgrounds
+			const textColor = song.color ? "text-slate-800 dark:text-slate-100" : "text-indigo-600 dark:text-indigo-400";
+							
+                card.innerHTML = `<span class="card-text text-indigo-600 dark:text-indigo-400 break-words">${song.word}</span>`;
+                card.onclick = () => openLyrics(index);
+                grid.appendChild(card);
+            });
+        }
+
+        function openLyrics(index) {
+            const song = songs[index];
+            const googleLink = document.getElementById('link-google');
+            document.getElementById('modal-title').innerText = song.title;
+            document.getElementById('modal-lyrics').innerText = song.lyrics || "Paroles à ajouter...";
+            document.getElementById('link-yt').href = song.yt;
+            document.getElementById('link-spoti').href = song.spoti;
+            
+            if(!song.lyrics || song.lyrics === "") {
+                googleLink.classList.remove('hidden');
+                googleLink.href = `https://www.google.com/search?q=paroles+${encodeURIComponent(song.title)}`;
+            } else {
+                googleLink.classList.add('hidden');
+            }
+            document.getElementById('lyrics-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLyrics() {
+            document.getElementById('lyrics-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('dark-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.innerText = "🌙";
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                icon.innerText = "☀️";
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.getElementById('dark-icon').innerText = "☀️";
+        }
+        
+        searchInput.addEventListener('input', (e) => renderSongs(e.target.value));
+        renderSongs();
+    </script>
+</body>
+</html>
